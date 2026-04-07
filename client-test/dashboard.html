@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #111827;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 200px;
+            background-color: #f8fafb;
+            border-right: 1px solid #e5e7eb;
+            padding: 24px 16px;
+            overflow-y: auto;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 16px;
+            cursor: pointer;
+            padding: 0 8px;
+        }
+
+        .sidebar-title:hover {
+            color: #374151;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #6b7280;
+            font-size: 14px;
+            transition: all 0.2s;
+            gap: 12px;
+        }
+
+        .sidebar-menu a:hover {
+            background-color: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .sidebar-menu a.active {
+            background-color: #d1fae5;
+            color: #059669;
+            font-weight: 500;
+        }
+
+        .sidebar-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 200px;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+
+        /* Header */
+        .header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-test {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-test:hover {
+            background-color: #f9fafb;
+        }
+
+        .btn-activate {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-activate:hover {
+            background-color: #f9fafb;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-left: 16px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+
+        .icon-btn:hover {
+            color: #374151;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background-color: #10b981;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        /* Dashboard Content */
+        .dashboard {
+            padding: 32px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .hub-section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 24px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.3fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 24px;
+            margin-bottom: 32px;
+            grid-template-areas:
+                "limit answered saved"
+                "transfer answered saved"
+                "responses responses responses";
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 18px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+            display: flex;
+            flex-direction: column;
+            min-height: 240px;
+            overflow: hidden;
+        }
+
+        .card.card-answered,
+        .card.card-saved {
+            min-height: auto;
+        }
+
+        .card.card-limit {
+            grid-area: limit;
+        }
+
+        .card.card-answered {
+            grid-area: answered;
+        }
+
+        .card.card-saved {
+            grid-area: saved;
+        }
+
+        .card.card-transfer {
+            grid-area: transfer;
+        }
+
+        .card.full-width-card {
+            grid-area: responses;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .card-menu {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0;
+        }
+
+        .card-menu:hover {
+            color: #6b7280;
+        }
+
+        /* Conversations Limit Card */
+        .conversations-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+            height: 100%;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: flex-start;
+            gap: 20px;
+            font-size: 13px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .legend-dot.weekly {
+            background-color: #059669;
+        }
+
+        .legend-dot.monthly {
+            background-color: #a855f7;
+        }
+
+        .legend-dot.yearly {
+            background-color: #06b6d4;
+        }
+
+        .limit-bars {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 34px;
+            padding: 6px;
+            width: 100%;
+            background: #f5f7f9;
+            border: 1px solid #eceff3;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .limit-bar {
+            height: 18px;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .limit-bar.weekly {
+            width: 25%;
+            background: linear-gradient(90deg, #0aa875, #13b281);
+        }
+
+        .limit-bar.monthly {
+            width: 48%;
+            background: linear-gradient(90deg, #a463f4, #9658ef);
+        }
+
+        .limit-bar.yearly {
+            width: 23%;
+            background: linear-gradient(90deg, #2eb8e8, #29b2e1);
+        }
+
+        @media (max-width: 768px) {
+            .limit-bars { gap: 8px; }
+            .limit-bar.weekly { width: 24%; }
+            .limit-bar.monthly { width: 50%; }
+            .limit-bar.yearly { width: 22%; }
+        }
+
+        .bar-label {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* Answered Chatbot Card */
+        .conversations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .see-all-link {
+            color: #059669;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .see-all-link:hover {
+            color: #047857;
+        }
+
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .conversation-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .conversation-info {
+            flex: 1;
+        }
+
+        .conversation-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #111827;
+        }
+
+        .conversation-preview {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
+
+        .conversation-status {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #d1fae5;
+            color: #059669;
+        }
+
+        .status-time {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Time Saved Card */
+        .time-saved-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+
+        .donut-chart-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin-bottom: 20px;
+        }
+
+        .donut-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .donut-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .time-entries {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .time-entry {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .time-entry-date {
+            color: #6b7280;
+        }
+
+        .time-entry-value {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .time-entry-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        /* Transferred to Operator Card */
+        .progress-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+            justify-content: space-between;
+        }
+
+        .progress-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(#059669 0deg 198deg, #e5e7eb 198deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .progress-inner {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-percent {
+            font-size: 24px;
+            font-weight: 700;
+            color: #059669;
+        }
+
+        .progress-label {
+            font-size: 10px;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .progress-steps {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .step-number {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #dbeafe;
+            color: #0284c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Responses Over Time Chart */
+        .full-width-card {
+            grid-column: 1 / -1;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .chart-legend-bottom {
+            display: flex;
+            justify-content: flex-end;
+            gap: 24px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        .legend-item-bottom {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot-bottom {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-dot-bottom.answered {
+            background-color: #bfdbfe;
+        }
+
+        .legend-dot-bottom.unanswered {
+            background-color: #fecaca;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1536px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 160px;
+                padding: 16px 12px;
+            }
+
+            .main-content {
+                margin-left: 160px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -200px;
+                width: 200px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s;
+                display: block;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .dashboard {
+                padding: 16px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .chart-legend {
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-title">
+                <span>Knowledge</span>
+                <span style="font-size: 12px; cursor: pointer;">▼</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="active">
+                        <span class="sidebar-icon">🏠</span>
+                        <span>Hub</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">📊</span>
+                        <span>Data sources</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">💡</span>
+                        <span>Suggestions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">🎮</span>
+                        <span>Playground</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">✓</span>
+                        <span>Tasks</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">⚙️</span>
+                        <span>Configure</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span class="sidebar-icon">🤖</span>
+                        <span>Train AI</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1 class="header-title">AI Chatbot</h1>
+                <div class="header-icons">
+                    <button class="icon-btn">🔍</button>
+                    <button class="icon-btn">🔔</button>
+                    <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <div class="avatar">👩</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="dashboard">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h2 class="hub-section-title">Hub</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-test">
+                            ⭕ Test Lyro
+                        </button>
+                        <button class="btn btn-activate">
+                            ✓ Activate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <!-- Card 1: Conversations Limit -->
+                    <div class="card card-limit">
+                        <div class="card-header">
+                            <span class="card-title">Conversations limit</span>
+                            <button class="card-menu">⋯</button>
+                        </div>
+                        <div class="conversations-chart">
+                            <div>
+                                <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px;">Conversations last month 12 hours</p>
+                                <div class="limit-bars">
+                                    <div class="limit-bar weekly"></div>
+                                    <div class="limit-bar monthly"></div>
+                                    <div class="limit-bar yearly"></div>
+                                </div>
+                            </div>
+                            <div class="chart-legend">
+                                <div class="legend-item">
+                                    <span class="legend-dot weekly"></span>
+                                    <span>Weekly</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot monthly"></span>
+                                    <span>Monthly</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot yearly"></span>
+                                    <span>Yearly</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Answered Chatbot -->
+                    <div class="card card-answered">
+                        <div class="card-header">
+                            <span class="card-title">Answered Chatbot</span>
+                            <a href="#" class="see-all-link">See All</a>
+                        </div>
+                        <div class="conversations-list">
+                            <div style="font-size: 11px; color: #9ca3af; margin-bottom: 8px; font-weight: 500;">Answered Today</div>
+                            <div class="conversation-item">
+                                <div class="user-avatar">T</div>
+                                <div class="conversation-info">
+                                    <div class="conversation-name">Tahsan Khan</div>
+                                    <div class="conversation-preview">Something Problem My Profile</div>
+                                </div>
+                                <span class="conversation-status status-active">Active</span>
+                            </div>
+                            <div style="font-size: 11px; color: #9ca3af; margin-top: 12px; margin-bottom: 8px; font-weight: 500;">All</div>
+                            <div class="conversation-item">
+                                <div class="user-avatar" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">J</div>
+                                <div class="conversation-info">
+                                    <div class="conversation-name">James Willey</div>
+                                    <div class="conversation-preview">Hello...</div>
+                                </div>
+                                <span class="conversation-status status-time">32m</span>
+                            </div>
+                            <div class="conversation-item">
+                                <div class="user-avatar" style="background: linear-gradient(135deg, #ec4899, #f472b6);">H</div>
+                                <div class="conversation-info">
+                                    <div class="conversation-name">Herry Kane</div>
+                                    <div class="conversation-preview">Need Help...</div>
+                                </div>
+                                <span class="conversation-status status-time">23m</span>
+                            </div>
+                            <div class="conversation-item">
+                                <div class="user-avatar" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">A</div>
+                                <div class="conversation-info">
+                                    <div class="conversation-name">Azam Khan</div>
+                                    <div class="conversation-preview">Hi</div>
+                                </div>
+                                <span class="conversation-status status-time">15m</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Time Saved -->
+                    <div class="card card-saved">
+                        <div class="card-header">
+                            <span class="card-title">Time Saved</span>
+                            <button class="card-menu">⋯</button>
+                        </div>
+                        <div class="time-saved-container">
+                            <div class="donut-chart-container">
+                                <canvas id="timeSavedChart"></canvas>
+                                <div class="donut-text">
+                                    <div class="donut-value">60m</div>
+                                    <div class="donut-label">Total saved time</div>
+                                </div>
+                            </div>
+                            <div class="time-entries">
+                                <div class="time-entry">
+                                    <span><span class="time-entry-dot" style="background-color: #a855f7;"></span>July 15, 2019</span>
+                                    <span class="time-entry-value">124m</span>
+                                </div>
+                                <div class="time-entry">
+                                    <span><span class="time-entry-dot" style="background-color: #06b6d4;"></span>July 15, 2019</span>
+                                    <span class="time-entry-value">160m</span>
+                                </div>
+                                <div class="time-entry">
+                                    <span><span class="time-entry-dot" style="background-color: #f59e0b;"></span>July 15, 2019</span>
+                                    <span class="time-entry-value">160m</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Transferred to Operator -->
+                    <div class="card card-transfer">
+                        <div class="card-header">
+                            <span class="card-title">Transferred to operator</span>
+                            <button class="card-menu">⋯</button>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-circle">
+                                <div class="progress-inner">
+                                    <div class="progress-percent">55%</div>
+                                    <div class="progress-label">Complete Lyro AI setup</div>
+                                </div>
+                            </div>
+                            <div class="progress-steps">
+                                <div class="progress-step">
+                                    <span class="step-number">1</span>
+                                    <span>Test Lyro AI Chatbot</span>
+                                </div>
+                                <div class="progress-step">
+                                    <span class="step-number">2</span>
+                                    <span>Activate Lyro AI Chatbot</span>
+                                </div>
+                                <div class="progress-step">
+                                    <span class="step-number">3</span>
+                                    <span>Complate Month AI Chatbot</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Responses Over Time - REMOVED, not in new layout -->
+                    <div class="card full-width-card">
+                        <div class="card-header">
+                            <span class="card-title">Responses over time</span>
+                            <div></div>
+                        </div>
+                        <div class="chart-legend-bottom">
+                            <div class="legend-item-bottom">
+                                <span class="legend-dot-bottom answered"></span>
+                                <span>Answered</span>
+                            </div>
+                            <div class="legend-item-bottom">
+                                <span class="legend-dot-bottom unanswered"></span>
+                                <span>Unanswered</span>
+                            </div>
+                            <span style="color: #6b7280;">Daily ▼</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="responsesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Time Saved Donut Chart
+        const timeSavedCtx = document.getElementById('timeSavedChart').getContext('2d');
+        new Chart(timeSavedCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Purple', 'Cyan', 'Orange'],
+                datasets: [{
+                    data: [124, 160, 160],
+                    backgroundColor: ['#a855f7', '#06b6d4', '#f59e0b'],
+                    borderColor: ['#a855f7', '#06b6d4', '#f59e0b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // Responses Over Time Chart
+        const responsesCtx = document.getElementById('responsesChart');
+        if (responsesCtx) {
+            new Chart(responsesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'Answered',
+                            data: [60, 80, 65, 75, 45, 65, 75, 90, 85, 75, 65, 60],
+                            backgroundColor: '#bfdbfe',
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Unanswered',
+                            data: [20, 10, 25, 15, 35, 20, 15, 10, 10, 20, 25, 20],
+                            backgroundColor: '#fecaca',
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            barPercentage: 0.7,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                },
+                                color: '#6b7280'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                font: {
+                                    size: 12
+                                },
+                                color: '#9ca3af'
+                            },
+                            grid: {
+                                color: '#f3f4f6',
+                                drawBorder: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Mobile menu toggle
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>
