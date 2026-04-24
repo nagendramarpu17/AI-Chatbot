@@ -9,6 +9,7 @@ function App({ siteKey }) {
   useEffect(() => {
     let timer;
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowLauncher(false);
     } else {
       timer = setTimeout(() => setShowLauncher(true), CLOSE_ANIMATION_MS);
